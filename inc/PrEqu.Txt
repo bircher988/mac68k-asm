@@ -1,0 +1,91 @@
+; PrEqu.Txt - Printing Manager equates (print records, dialogs, driver calls)
+; Part of mac68k-asm (https://github.com/bircher988/mac68k-asm). Names and values as
+; documented in Inside Macintosh; generated file, do not edit by hand.
+
+iPrDrvrID	EQU	2
+iPrDrvrRef	EQU	$FFFD
+iPrDrvrDev	EQU	$FD00
+iPrBitsCtl	EQU	4
+lScreenBits	EQU	$00000000
+lPaintBits	EQU	$00000001
+iPrIOCtl	EQU	5
+iPrEvtCtl	EQU	6
+lPrEvtAll	EQU	$00FFFFFD
+lPrEvtTop	EQU	$00FEFFFD
+iPrDevCtl	EQU	7
+iPrReset	EQU	1
+iPrPageEnd	EQU	2
+iPrLineFeed	EQU	3
+iFMgrCtl	EQU	8
+iFMgrStat	EQU	8
+
+rPage	EQU	6
+
+iPageV	EQU	2
+iPageH	EQU	4
+feed	EQU	7
+
+iDevBytes	EQU	6
+
+iFstPage	EQU	0
+iLstPage	EQU	2
+iCopies	EQU	4
+bJDocLoop	EQU	6
+fFromApp	EQU	7
+pIdleProc	EQU	8
+pFileName	EQU	12
+iFileVol	EQU	16
+bFileVers	EQU	18
+iPrJobSize	EQU	20
+
+iPrVersion	EQU	0
+prInfo	EQU	2
+rPaper	EQU	16
+prStl	EQU	24
+prInfoPT	EQU	32
+prXInfo	EQU	46
+prJob	EQU	62
+iPrintSize	EQU	120
+
+gPort	EQU	0
+iPrPortSize	EQU	178
+
+iTotPages	EQU	0
+iCurPage	EQU	2
+iTotCopies	EQU	4
+iCurCopy	EQU	6
+iTotBands	EQU	8
+iCurBand	EQU	10
+fPgDirty	EQU	12
+fImaging	EQU	13
+hPrint	EQU	14
+pPrPort	EQU	18
+iPrStatSize	EQU	26
+
+iPrAbort	EQU	128
+iPrRelease	EQU	3
+iPrPgFract	EQU	120
+
+iPrErr	EQU	0
+
+bDraftLoop	EQU	0
+bSpoolLoop	EQU	1
+bUser1Loop	EQU	2
+bUser2Loop	EQU	3
+
+lPStrType	EQU	$53545220
+iPStrRFil	EQU	$E000
+
+lPrintType	EQU	$50524543
+iPrintDef	EQU	0
+iPrintLst	EQU	1
+iPrintDrvr	EQU	2
+
+lPfType	EQU	$5046494C
+lPfSig	EQU	$50535953
+iPfIcon	EQU	140
+
+lPrType	EQU	$4150504C
+lPrSig	EQU	$50535953
+iPrIcon	EQU	138
+

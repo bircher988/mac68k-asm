@@ -1,0 +1,208 @@
+; PackMacs.Txt - package equates and call macros (Standard File, Disk Initialization, International Utilities, Binary-Decimal Conversion)
+; Part of mac68k-asm (https://github.com/bircher988/mac68k-asm). Names and values as
+; documented in Inside Macintosh; generated file, do not edit by hand.
+
+; _PackCall #selector,_PackN pushes the selector and calls the package trap; the
+; macros below wrap the documented routine selectors.
+
+dskInit	EQU	2
+stdFile	EQU	3
+flPoint	EQU	4
+trFunc	EQU	5
+intUtil	EQU	6
+bdConv	EQU	7
+
+putDlgID	EQU	-3999
+getDlgID	EQU	-4000
+
+putSave	EQU	1
+putCancel	EQU	2
+putEject	EQU	5
+putDrive	EQU	6
+putName	EQU	7
+
+getOpen	EQU	1
+getCancel	EQU	3
+getEject	EQU	5
+getDrive	EQU	6
+getNmList	EQU	7
+getScroll	EQU	8
+
+rGood	EQU	0
+rType	EQU	2
+rVolume	EQU	6
+rVersion	EQU	8
+rName	EQU	10
+
+sfPutFile	EQU	1
+sfPPutFile	EQU	3
+sfGetFile	EQU	2
+sfPGetFile	EQU	4
+
+diLoad	EQU	2
+diUnload	EQU	4
+diBadMount	EQU	0
+diFormat	EQU	6
+diVerify	EQU	8
+diZero	EQU	10
+
+iuGetIntl	EQU	6
+iuSetIntl	EQU	8
+iuDateString	EQU	0
+iuDatePString	EQU	14
+iuTimeString	EQU	2
+iuTimePString	EQU	16
+iuMetric	EQU	4
+iuMagString	EQU	10
+iuMagIDString	EQU	12
+
+decimalPt	EQU	0
+thousSep	EQU	1
+listSep	EQU	2
+currSym	EQU	3
+currFmt	EQU	6
+dateOrder	EQU	7
+shrtDateFmt	EQU	8
+dateSep	EQU	9
+timecycle	EQU	10
+timeFmt	EQU	11
+mornStr	EQU	12
+eveStr	EQU	16
+timeSep	EQU	20
+timeSuff	EQU	21
+metricSys	EQU	29
+intl0Vers	EQU	30
+
+days	EQU	0
+months	EQU	112
+suppressDay	EQU	304
+lngDateFmt	EQU	305
+dayLeading0	EQU	306
+abbrLen	EQU	307
+st0	EQU	308
+st1	EQU	312
+st2	EQU	316
+st3	EQU	320
+st4	EQU	324
+intl1Vers	EQU	328
+localRtn	EQU	330
+
+shortDate	EQU	0
+longDate	EQU	1
+abbrevDate	EQU	2
+
+currLeadingZ	EQU	128
+currTrailingZ	EQU	64
+currNegSym	EQU	32
+currSymLead	EQU	16
+
+mdy	EQU	0
+dmy	EQU	1
+ymd	EQU	2
+
+century	EQU	128
+mntLdingZ	EQU	64
+dayLdingZ	EQU	32
+
+hrLeadingZ	EQU	128
+minLeadingZ	EQU	64
+secLeadingZ	EQU	32
+
+verUS	EQU	0
+verFrance	EQU	1
+verBritain	EQU	2
+verGermany	EQU	3
+verItaly	EQU	4
+verNetherlands	EQU	5
+verBelgiumLux	EQU	6
+verSweden	EQU	7
+verSpain	EQU	8
+verDenmark	EQU	9
+verPortugal	EQU	10
+verFrCanada	EQU	11
+verNorway	EQU	12
+verIsrael	EQU	13
+verJapan	EQU	14
+verAustralia	EQU	15
+verArabia	EQU	16
+verFinland	EQU	17
+verFrSwiss	EQU	18
+verGrSwiss	EQU	19
+verGreece	EQU	20
+verIceland	EQU	21
+verMalta	EQU	22
+verCyprus	EQU	23
+verTurkey	EQU	24
+verYugoslavia	EQU	25
+
+numToString	EQU	0
+stringToNum	EQU	1
+
+	.MACRO	_PackCall
+	MOVE.W	%1,-(SP)
+	%2
+	.ENDM
+
+	.MACRO	_DILoad
+	_PackCall	#DILoad,_Pack2
+	.ENDM
+	.MACRO	_DIUnLoad
+	_PackCall	#DIUnLoad,_Pack2
+	.ENDM
+	.MACRO	_DIBadMount
+	_PackCall	#DIBadMount,_Pack2
+	.ENDM
+	.MACRO	_DIFormat
+	_PackCall	#DIFormat,_Pack2
+	.ENDM
+	.MACRO	_DIVerify
+	_PackCall	#DIVerify,_Pack2
+	.ENDM
+	.MACRO	_DIZero
+	_PackCall	#DIZero,_Pack2
+	.ENDM
+	.MACRO	_SFPutFile
+	_PackCall	#SFPutFile,_Pack3
+	.ENDM
+	.MACRO	_SFPPutFile
+	_PackCall	#SFPPutFile,_Pack3
+	.ENDM
+	.MACRO	_SFGetFile
+	_PackCall	#SFGetFile,_Pack3
+	.ENDM
+	.MACRO	_SFPGetFile
+	_PackCall	#SFPGetFile,_Pack3
+	.ENDM
+	.MACRO	_IUGetIntl
+	_PackCall	#IUGetIntl,_Pack6
+	.ENDM
+	.MACRO	_IUSetIntl
+	_PackCall	#IUSetIntl,_Pack6
+	.ENDM
+	.MACRO	_IUDateString
+	_PackCall	#IUDateString,_Pack6
+	.ENDM
+	.MACRO	_IUDatePString
+	_PackCall	#IUDatePString,_Pack6
+	.ENDM
+	.MACRO	_IUTimeString
+	_PackCall	#IUTimeString,_Pack6
+	.ENDM
+	.MACRO	_IUTimePString
+	_PackCall	#IUTimePString,_Pack6
+	.ENDM
+	.MACRO	_IUMetric
+	_PackCall	#IUMetric,_Pack6
+	.ENDM
+	.MACRO	_IUMagString
+	_PackCall	#IUMagString,_Pack6
+	.ENDM
+	.MACRO	_IUMagIDString
+	_PackCall	#IUMagIDString,_Pack6
+	.ENDM
+	.MACRO	_StringToNum
+	_PackCall	#stringToNum,_Pack7
+	.ENDM
+	.MACRO	_NumToString
+	_PackCall	#numToString,_Pack7
+	.ENDM

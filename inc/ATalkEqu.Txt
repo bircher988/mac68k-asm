@@ -1,0 +1,228 @@
+; ATalkEqu.Txt - AppleTalk equates (MPP, ATP, NBP, DDP parameter blocks and codes)
+; Part of mac68k-asm (https://github.com/bircher988/mac68k-asm). Names and values as
+; documented in Inside Macintosh; generated file, do not edit by hand.
+
+AbusVars	EQU	$2D8
+AbusDCE	EQU	$2DC
+
+ATPLoadedBit	EQU	4
+
+MPPUnitNum	EQU	9
+ATPUnitNum	EQU	10
+
+NBP	EQU	$02
+
+NBPControl	EQU	0
+NBPTCount	EQU	0
+NBPID	EQU	1
+NBPTuple	EQU	2
+
+TupleNet	EQU	0
+TupleNode	EQU	2
+TupleSkt	EQU	3
+TupleEnum	EQU	4
+TupleName	EQU	5
+TupleAddrSz	EQU	5
+
+BrRq	EQU	1
+LkUp	EQU	2
+LkUpReply	EQU	3
+
+NIS	EQU	2
+TupleMax	EQU	15
+Equals	EQU	'='
+Star	EQU	'*'
+
+NBPBuffOvr	EQU	-1024
+NBPNoConfirm	EQU	-1025
+NBPConfDiff	EQU	-1026
+NBPDuplicate	EQU	-1027
+NBPNotFound	EQU	-1028
+NBPNISErr	EQU	-1029
+
+RTMP	EQU	$01
+
+RTMPNet	EQU	0
+RTMPIDLen	EQU	2
+RTMPID	EQU	3
+
+RTMPSkt	EQU	1
+
+DDPHopCnt	EQU	0
+DDPLength	EQU	0
+DDPChecksum	EQU	2
+DDPDstNet	EQU	4
+DDPSrcNet	EQU	6
+DDPDstNode	EQU	8
+DDPSrcNode	EQU	9
+DDPDstSkt	EQU	10
+DDPSrcSkt	EQU	11
+DDPType	EQU	12
+
+sDDPDstSkt	EQU	2
+sDDPSrcSkt	EQU	3
+sDDPType	EQU	4
+
+DDPHSzLong	EQU	13
+DDPHSzShort	EQU	5
+
+ShortDDP	EQU	$01
+LongDDP	EQU	$02
+
+DDPMaxWKS	EQU	$7F
+DDPMaxData	EQU	586
+DDPLenMask	EQU	$03FF
+
+LAPDstAdr	EQU	0
+LAPSrcAdr	EQU	1
+LAPType	EQU	2
+LAPHdSz	EQU	3
+
+OverrunErr	EQU	-1
+CRCErr	EQU	-2
+UnderrunErr	EQU	-3
+LengthErr	EQU	-4
+
+SCCLockout	EQU	$2600
+
+LookupReply	EQU	242
+WriteLAP	EQU	243
+DetachPH	EQU	244
+AttachPH	EQU	245
+WriteDDP	EQU	246
+CloseSkt	EQU	247
+OpenSkt	EQU	248
+LoadNBP	EQU	249
+LastResident	EQU	249
+ConfirmName	EQU	250
+LookupName	EQU	251
+RemoveName	EQU	252
+RegisterName	EQU	253
+KillNBP	EQU	254
+UnloadNBP	EQU	255
+
+FirstMPP	EQU	242
+LastMPP	EQU	255
+
+Socket	EQU	$1C
+CheckSumFlag	EQU	$1D
+Listener	EQU	$1E
+ArgBlkSz	EQU	$10
+WDSPointer	EQU	$1E
+
+ProtType	EQU	$1C
+Handler	EQU	$1E
+
+Interval	EQU	$1C
+Count	EQU	$1D
+EntityPtr	EQU	$1E
+NTQElPtr	EQU	$1E
+ConfirmAddr	EQU	$22
+NewSocket	EQU	$26
+
+VerifyFlag	EQU	$22
+
+RetBuffPtr	EQU	$22
+RetBuffSize	EQU	$26
+MaxToGet	EQU	$28
+NumGotten	EQU	$2A
+
+NTLink	EQU	0
+NTTuple	EQU	4
+NTSocket	EQU	7
+NTEntity	EQU	9
+
+SysLAPAddr	EQU	0
+ToRHA	EQU	1
+SysABridge	EQU	$19
+SysNetNum	EQU	$1A
+VSCCEnable	EQU	$1C
+ATPVars	EQU	$1E
+AfterGlobals	EQU	$22
+
+RHASize	EQU	$18
+WDSEntrySz	EQU	6
+
+ATP	EQU	$3
+
+ATPControl	EQU	0
+ATPBitmap	EQU	1
+ATPRespNo	EQU	1
+ATPTransID	EQU	2
+ATPUserData	EQU	4
+ATPHdSz	EQU	8
+
+ATPReqCode	EQU	$40
+ATPRspCode	EQU	$80
+ATPRelCode	EQU	$C0
+ATPXOBit	EQU	5
+ATPEOMBit	EQU	4
+ATPSTSBit	EQU	3
+FlagMask	EQU	$3F
+ControlMask	EQU	$F8
+
+ATPMaxNum	EQU	8
+ATPMaxData	EQU	$242
+
+RelRspCB	EQU	249
+CloseATPSkt	EQU	250
+AddResponse	EQU	251
+SendResponse	EQU	252
+GetRequest	EQU	253
+OpenATPSkt	EQU	254
+SendRequest	EQU	255
+RelTCB	EQU	256
+
+FirstATP	EQU	249
+LastATP	EQU	256
+FirstNoSkt	EQU	254
+
+ATPSocket	EQU	$1C
+ATPFlags	EQU	$1D
+AddrBlock	EQU	$1E
+ReqLength	EQU	$22
+ReqPointer	EQU	$24
+BDSPointer	EQU	$28
+GUArea	EQU	$2C
+UserData	EQU	$12
+
+SendCHK	EQU	0
+TIDValid	EQU	1
+
+NumOfBuffs	EQU	$2C
+TimeoutVal	EQU	$2D
+NumOfResps	EQU	$2E
+RetryCount	EQU	$2F
+
+ReqTID	EQU	$16
+CurrBitmap	EQU	$1C
+
+Bitmap	EQU	$2C
+TransID	EQU	$2E
+
+BDSSize	EQU	$2D
+
+RspNum	EQU	$2C
+
+MaxReqs	EQU	6
+MaxRsps	EQU	8
+MaxATPSkts	EQU	6
+ReleaseTime	EQU	30
+
+ReqFailed	EQU	-1096
+TooManyReqs	EQU	-1097
+TooManySkts	EQU	-1098
+BadATPSkt	EQU	-1099
+BadBuffNum	EQU	-1100
+NoRelErr	EQU	-1101
+CBNotFound	EQU	-1102
+NoSendResp	EQU	-1103
+NoDataArea	EQU	-1104
+ReqAborted	EQU	-1105
+
+BDSBuffSz	EQU	0
+BDSBuffAdr	EQU	2
+BDSDataSz	EQU	6
+BDSUserData	EQU	8
+BDSEntrySz	EQU	12
+

@@ -1,0 +1,5 @@
+; Hello.Link - link specification: one module, result goes into Hello.R via INCLUDE
+/Output Hello.code
+/Type 'TEMP' '????'
+Hello
+/End

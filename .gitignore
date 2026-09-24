@@ -1,0 +1,5 @@
+mac68k-asm
+src/*.o
+out/
+*.deb
+__pycache__/

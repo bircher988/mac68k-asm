@@ -1,0 +1,3 @@
+ASM	Hello.Asm	Exec	Edit
+LINK	Hello.Link	Exec	Edit
+RMAKER	Hello.R	Hello	Edit
