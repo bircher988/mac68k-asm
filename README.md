@@ -19,14 +19,17 @@ make                                  # needs only a C compiler and make
 ./mac68k-asm build example/Hello.Job -o out
 ```
 
-`out/Hello.bin` is the finished application as MacBinary. Put it on a disk image
-with hfsutils and boot the image in an emulator (Mini vMac) or on the real machine:
+`out/Hello.bin` is the finished application as MacBinary. Put it on a floppy disk image
+with the companion tool [mac68k-disk](https://github.com/bircher988/mac68k-disk) and boot
+the image in an emulator (Mini vMac) or on the real machine:
 
 ```
-hmount disk.img
-hcopy -m out/Hello.bin :Hello
-humount
+mac68k-disk new Apps.dsk            # 400K MFS, readable by every 68k Mac
+mac68k-disk add Apps.dsk out/Hello.bin
 ```
+
+(hfsutils works too - `hcopy -m out/Hello.bin :Hello` - but it is no longer packaged
+in Debian 13.)
 
 ## Installation
 
@@ -39,7 +42,7 @@ wget https://github.com/bircher988/mac68k-asm/releases/download/v1.0/mac68k-asm_
 sudo apt install ./mac68k-asm_1.0_arm64.deb      # or _amd64.deb on a PC
 ```
 
-`hfsutils` is recommended (not required) for putting applications onto disk images.
+[mac68k-disk](https://github.com/bircher988/mac68k-disk) puts applications onto disk images.
 To build the package yourself: `packaging/debian/build-deb.sh`.
 
 **From source (Linux, macOS, any Unix).** `make` and then `sudo make install` puts the binary into
