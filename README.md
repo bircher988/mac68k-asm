@@ -33,6 +33,13 @@ in Debian 13.)
 
 ## Installation
 
+**macOS (Homebrew).** The formula lives in the tap
+[bircher988/tap](https://github.com/bircher988/homebrew-tap) and builds from source:
+
+```
+brew install bircher988/tap/mac68k-asm
+```
+
 **Debian / Ubuntu / Raspberry Pi OS.** Every
 [release](https://github.com/bircher988/mac68k-asm/releases) has a `.deb` for arm64
 (Raspberry Pi) and amd64 (PC). Download it and install it with apt:
