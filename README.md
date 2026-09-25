@@ -3,8 +3,9 @@
 `mac68k-asm` builds applications for the first Macs (Mac 128K/512K/Plus, 64K ROM,
 System 3.x) from 68000 assembler sources - on Linux or macOS, without an emulator.
 One small C program contains the assembler, the linker, the resource compiler and a
-MacBinary writer. The result goes onto a floppy image with `hcopy -m` and runs on real
-hardware just as in an emulator.
+MacBinary writer. The result goes onto a floppy image with
+[mac68k-disk](https://github.com/bircher988/mac68k-disk) and runs on real hardware just as
+in an emulator.
 
 The source dialect and the project files (`.Job`, `.Link`, `.R`) follow the Macintosh
 assembler conventions of the mid-1980s, so projects written for the Macintosh 68000
@@ -128,12 +129,16 @@ Output of a build in `outdir`:
 
 | File | Content |
 |---|---|
-| `<App>.bin` | the finished application as MacBinary (`hcopy -m` onto an image) |
+| `<App>.bin` | the finished application as MacBinary (`mac68k-disk add` puts it onto an image) |
 | `<Output>.bin`, `*.rsrc` | intermediate stages (linker output, resource compiler output) |
 | `<Output>.raw` | the bare code of the linked modules |
 | `<Output>.MAP` | segment and globals sizes |
 | `<Output>.lst` | listing with addresses and bytes |
 | `<Output>.ERR` | only on assembler errors |
+
+A failed build exits with status 1 and leaves the results of an earlier build in place, so
+scripts should check the exit status. When the resources contain a `BNDL`, the application
+gets the Finder's hasBundle flag, so the Finder shows its icons.
 
 `build.sh` is a convenience wrapper for a repository layout with one folder per
 project (`<repo>/projects/<project>/`, shared sources in `<repo>/shared/`); it can
@@ -203,7 +208,8 @@ contain nothing but those names and values, our own headers and macros.
 
 ## Tests
 
-`make test` builds the example. With `MAC68K_TEST_PROJECTS` (a directory with one
-folder per project) and `MAC68K_TEST_REF` (the same tree with reference builds, as
-MacBinary) it rebuilds every job and compares file type, creator and every resource
-with `tests/rescmp.py`.
+`make test` runs the regression tests in `tests/regress/` and builds the example. With
+`MAC68K_TEST_PROJECTS` (a directory with one folder per project) and `MAC68K_TEST_REF`
+(the same tree with reference builds, as MacBinary) it rebuilds every job and compares
+file type, creator, the Finder's hasBundle flag and every resource with
+`tests/rescmp.py`.
