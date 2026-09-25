@@ -1,0 +1,401 @@
+; Converge.Asm - regression test for "assembly does not converge".
+; A widened BRA.S makes the code behind it grow in pass 2. The forward BPL.S
+; that each skip one instruction must stay short (6A02): in the pass where the
+; code grows they see a stale displacement of 0 (a NOP), and that must not mark
+; them long - otherwise each one widens the next, one per pass, until the
+; assembler gives up after 64 passes (mac68k-asm 1.0, found in Tank Duel).
+	XDEF	Start
+Start
+	BRA.S	Far			; does not reach: widened (the only warning)
+	TST.W	D0
+	BPL.S	@0
+	NEG.W	D0
+@0	NOP
+	TST.W	D0
+	BPL.S	@1
+	NEG.W	D0
+@1	NOP
+	TST.W	D0
+	BPL.S	@2
+	NEG.W	D0
+@2	NOP
+	TST.W	D0
+	BPL.S	@3
+	NEG.W	D0
+@3	NOP
+	TST.W	D0
+	BPL.S	@4
+	NEG.W	D0
+@4	NOP
+	TST.W	D0
+	BPL.S	@5
+	NEG.W	D0
+@5	NOP
+	TST.W	D0
+	BPL.S	@6
+	NEG.W	D0
+@6	NOP
+	TST.W	D0
+	BPL.S	@7
+	NEG.W	D0
+@7	NOP
+	TST.W	D0
+	BPL.S	@8
+	NEG.W	D0
+@8	NOP
+	TST.W	D0
+	BPL.S	@9
+	NEG.W	D0
+@9	NOP
+	TST.W	D0
+	BPL.S	@10
+	NEG.W	D0
+@10	NOP
+	TST.W	D0
+	BPL.S	@11
+	NEG.W	D0
+@11	NOP
+	TST.W	D0
+	BPL.S	@12
+	NEG.W	D0
+@12	NOP
+	TST.W	D0
+	BPL.S	@13
+	NEG.W	D0
+@13	NOP
+	TST.W	D0
+	BPL.S	@14
+	NEG.W	D0
+@14	NOP
+	TST.W	D0
+	BPL.S	@15
+	NEG.W	D0
+@15	NOP
+	TST.W	D0
+	BPL.S	@16
+	NEG.W	D0
+@16	NOP
+	TST.W	D0
+	BPL.S	@17
+	NEG.W	D0
+@17	NOP
+	TST.W	D0
+	BPL.S	@18
+	NEG.W	D0
+@18	NOP
+	TST.W	D0
+	BPL.S	@19
+	NEG.W	D0
+@19	NOP
+	TST.W	D0
+	BPL.S	@20
+	NEG.W	D0
+@20	NOP
+	TST.W	D0
+	BPL.S	@21
+	NEG.W	D0
+@21	NOP
+	TST.W	D0
+	BPL.S	@22
+	NEG.W	D0
+@22	NOP
+	TST.W	D0
+	BPL.S	@23
+	NEG.W	D0
+@23	NOP
+	TST.W	D0
+	BPL.S	@24
+	NEG.W	D0
+@24	NOP
+	TST.W	D0
+	BPL.S	@25
+	NEG.W	D0
+@25	NOP
+	TST.W	D0
+	BPL.S	@26
+	NEG.W	D0
+@26	NOP
+	TST.W	D0
+	BPL.S	@27
+	NEG.W	D0
+@27	NOP
+	TST.W	D0
+	BPL.S	@28
+	NEG.W	D0
+@28	NOP
+	TST.W	D0
+	BPL.S	@29
+	NEG.W	D0
+@29	NOP
+	TST.W	D0
+	BPL.S	@30
+	NEG.W	D0
+@30	NOP
+	TST.W	D0
+	BPL.S	@31
+	NEG.W	D0
+@31	NOP
+	TST.W	D0
+	BPL.S	@32
+	NEG.W	D0
+@32	NOP
+	TST.W	D0
+	BPL.S	@33
+	NEG.W	D0
+@33	NOP
+	TST.W	D0
+	BPL.S	@34
+	NEG.W	D0
+@34	NOP
+	TST.W	D0
+	BPL.S	@35
+	NEG.W	D0
+@35	NOP
+	TST.W	D0
+	BPL.S	@36
+	NEG.W	D0
+@36	NOP
+	TST.W	D0
+	BPL.S	@37
+	NEG.W	D0
+@37	NOP
+	TST.W	D0
+	BPL.S	@38
+	NEG.W	D0
+@38	NOP
+	TST.W	D0
+	BPL.S	@39
+	NEG.W	D0
+@39	NOP
+	TST.W	D0
+	BPL.S	@40
+	NEG.W	D0
+@40	NOP
+	TST.W	D0
+	BPL.S	@41
+	NEG.W	D0
+@41	NOP
+	TST.W	D0
+	BPL.S	@42
+	NEG.W	D0
+@42	NOP
+	TST.W	D0
+	BPL.S	@43
+	NEG.W	D0
+@43	NOP
+	TST.W	D0
+	BPL.S	@44
+	NEG.W	D0
+@44	NOP
+	TST.W	D0
+	BPL.S	@45
+	NEG.W	D0
+@45	NOP
+	TST.W	D0
+	BPL.S	@46
+	NEG.W	D0
+@46	NOP
+	TST.W	D0
+	BPL.S	@47
+	NEG.W	D0
+@47	NOP
+	TST.W	D0
+	BPL.S	@48
+	NEG.W	D0
+@48	NOP
+	TST.W	D0
+	BPL.S	@49
+	NEG.W	D0
+@49	NOP
+	TST.W	D0
+	BPL.S	@50
+	NEG.W	D0
+@50	NOP
+	TST.W	D0
+	BPL.S	@51
+	NEG.W	D0
+@51	NOP
+	TST.W	D0
+	BPL.S	@52
+	NEG.W	D0
+@52	NOP
+	TST.W	D0
+	BPL.S	@53
+	NEG.W	D0
+@53	NOP
+	TST.W	D0
+	BPL.S	@54
+	NEG.W	D0
+@54	NOP
+	TST.W	D0
+	BPL.S	@55
+	NEG.W	D0
+@55	NOP
+	TST.W	D0
+	BPL.S	@56
+	NEG.W	D0
+@56	NOP
+	TST.W	D0
+	BPL.S	@57
+	NEG.W	D0
+@57	NOP
+	TST.W	D0
+	BPL.S	@58
+	NEG.W	D0
+@58	NOP
+	TST.W	D0
+	BPL.S	@59
+	NEG.W	D0
+@59	NOP
+	TST.W	D0
+	BPL.S	@60
+	NEG.W	D0
+@60	NOP
+	TST.W	D0
+	BPL.S	@61
+	NEG.W	D0
+@61	NOP
+	TST.W	D0
+	BPL.S	@62
+	NEG.W	D0
+@62	NOP
+	TST.W	D0
+	BPL.S	@63
+	NEG.W	D0
+@63	NOP
+	TST.W	D0
+	BPL.S	@64
+	NEG.W	D0
+@64	NOP
+	TST.W	D0
+	BPL.S	@65
+	NEG.W	D0
+@65	NOP
+	TST.W	D0
+	BPL.S	@66
+	NEG.W	D0
+@66	NOP
+	TST.W	D0
+	BPL.S	@67
+	NEG.W	D0
+@67	NOP
+	TST.W	D0
+	BPL.S	@68
+	NEG.W	D0
+@68	NOP
+	TST.W	D0
+	BPL.S	@69
+	NEG.W	D0
+@69	NOP
+	TST.W	D0
+	BPL.S	@70
+	NEG.W	D0
+@70	NOP
+	TST.W	D0
+	BPL.S	@71
+	NEG.W	D0
+@71	NOP
+	TST.W	D0
+	BPL.S	@72
+	NEG.W	D0
+@72	NOP
+	TST.W	D0
+	BPL.S	@73
+	NEG.W	D0
+@73	NOP
+	TST.W	D0
+	BPL.S	@74
+	NEG.W	D0
+@74	NOP
+	TST.W	D0
+	BPL.S	@75
+	NEG.W	D0
+@75	NOP
+	TST.W	D0
+	BPL.S	@76
+	NEG.W	D0
+@76	NOP
+	TST.W	D0
+	BPL.S	@77
+	NEG.W	D0
+@77	NOP
+	TST.W	D0
+	BPL.S	@78
+	NEG.W	D0
+@78	NOP
+	TST.W	D0
+	BPL.S	@79
+	NEG.W	D0
+@79	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+Far	RTS
+	END

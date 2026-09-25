@@ -778,13 +778,19 @@ static int enc_branch(Asm *A, int cc, int suf, char **ops, int nops, unsigned ad
     if (suf == 'l') { error_at(A, "%s.L is not available on the 68000", mn); return 0; }
     int fit = (v.undefined || (fits(disp, -128, 127) && disp != 0)) && !A->branch_long[A->cur_index];
     if (v.external && (suf == 's' || suf == 'b')) fit = fits(disp, -128, 127) && disp != 0;
+    /* Bcc.S to the next instruction: a NOP (MDS). It is as long as a short branch, so it
+     * must not mark the branch long: in a pass where earlier code has just grown, a forward
+     * Bcc.S over one instruction sees a stale displacement of 0 here, and a permanent .W
+     * would push the next such branch into the same state - one per pass, until the
+     * assembly no longer converges. */
+    int nop = (suf == 's' || suf == 'b') && disp == 0 && !unknown && cc != 1 && !A->branch_long[A->cur_index];
     if (suf == 's' || suf == 'b') use_short = fit;
     else if (forward) use_short = 0;           /* forward: .W, BSR/BRA as JSR/JMP (MDS assembles in one pass) */
     else use_short = fit;                      /* backward: short when it fits, even with an explicit .W (MDS) */
-    if (!use_short && !v.undefined) A->branch_long[A->cur_index] = 1;   /* never shrink again: guarantees convergence */
-    if (!use_short && (suf == 's' || suf == 'b') && A->emit) warn_at(A, "%s.S does not reach its target, widened to .W", mn);
+    if (!use_short && !nop && !v.undefined) A->branch_long[A->cur_index] = 1;   /* never shrink again: guarantees convergence */
+    if (!use_short && !nop && (suf == 's' || suf == 'b') && A->emit) warn_at(A, "%s.S does not reach its target, widened to .W", mn);
     if (use_short) { EMIT(0x6000 | (cc << 8) | ((unsigned)disp & 0xff)); return 1; }
-    if ((suf == 's' || suf == 'b') && disp == 0 && !unknown && cc != 1) { EMIT(0x4E71); return 1; }   /* Bcc.S to the next instruction: NOP (MDS) */
+    if (nop) { EMIT(0x4E71); return 1; }
     if (forward && (cc == 0 || cc == 1)) {     /* BRA/BSR to an unknown label -> JMP/JSR d16(PC) (MDS) */
         EMIT(cc == 0 ? 0x4EFA : 0x4EBA);
     } else {

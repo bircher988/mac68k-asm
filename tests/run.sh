@@ -19,6 +19,15 @@ MAC68K=${MAC68K:-$ROOT/mac68k-asm}
 TMP=$(mktemp -d "${TMPDIR:-/tmp}/mac68k-asm-test.XXXXXX")
 trap 'rm -rf "$TMP"' EXIT
 
+# regression tests (always)
+mkdir -p "$TMP/regress"
+"$MAC68K" build "$HERE/regress/Converge.Job" -o "$TMP/regress" > "$TMP/regress.log" 2>&1
+if [ ! -f "$TMP/regress/Converge.bin" ]; then cat "$TMP/regress.log"; echo "FAIL: regress/Converge does not build"; exit 1; fi
+n=$(grep -c "6A02 *	BPL.S" "$TMP/regress/Converge.code.lst")
+w=$(grep -c "does not reach" "$TMP/regress.log")
+[ "$n" = 80 ] && [ "$w" = 1 ] || { echo "FAIL: regress/Converge: $n of 80 BPL.S short, $w widening warnings (want 1)"; exit 1; }
+echo "ok: regress/Converge (forward Bcc.S over one instruction stays short)"
+
 if [ -z "${MAC68K_TEST_PROJECTS:-}" ] || [ -z "${MAC68K_TEST_REF:-}" ]; then
     mkdir -p "$TMP/hello"
     "$MAC68K" build "$ROOT/example/Hello.Job" -o "$TMP/hello" > "$TMP/hello.log" 2>&1; rc=$?
