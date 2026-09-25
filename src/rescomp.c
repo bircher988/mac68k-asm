@@ -595,10 +595,15 @@ int rescomp_file(const char *rpath, const char *outdir, const char *const *dirs,
     char *rsrcpath = has_ext ? xstrdup(base) : xsprintf("%s.rsrc", base);
     char *binpath = xsprintf("%s.bin", base);
     if (write_binary_file(rsrcpath, fork.d, fork.n)) { fprintf(stderr, "rescomp: cannot write %s\n", rsrcpath); return 1; }
+    /* Finder flags: with a BNDL the file gets hasBundle, so that the Finder uses its icons
+     * (as with MDS RMaker - the reference builds show it). */
+    unsigned fflags = 0;
+    for (int i = 0; i < res.n; i++) if (!memcmp(res.v[i].type, "BNDL", 4)) fflags |= 0x2000;
     Buf mb = {0};
-    write_macbinary(outname, ftype, creator, NULL, 0, fork.d, fork.n, 0, &mb);
+    write_macbinary(outname, ftype, creator, NULL, 0, fork.d, fork.n, fflags, &mb);
     if (write_binary_file(binpath, mb.d, mb.n)) { fprintf(stderr, "rescomp: cannot write %s\n", binpath); return 1; }
-    printf("rescomp: %s (%s/%s) %d resources, fork %zu bytes -> %s\n", outname, ftype, creator, res.n, fork.n, binpath);
+    printf("rescomp: %s (%s/%s) %d resources, fork %zu bytes%s -> %s\n", outname, ftype, creator, res.n, fork.n,
+           fflags ? ", hasBundle" : "", binpath);
     fflush(stdout);
     buf_free(&mb); buf_free(&fork); reslist_free(&res);
     free(base); free(rsrcpath); free(binpath); free(outname); free(rdir); free(sdirs); free(fmt); free(text);

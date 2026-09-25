@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """rescmp.py A B - compare two MacBinary files by content: file type and creator, then the
-resource forks as sets of (type, id, name, attributes, data). The MacBinary header's time stamps
+resource forks as sets of (type, id, name, attributes, data), and the Finder's hasBundle flag. The MacBinary header's time stamps
 and CRC and the resource map's handle fields are ignored. Exit 0 if equal, 1 with a report if not.
 Used by tests/run.sh; needs only the Python standard library."""
 import struct, sys
@@ -44,9 +44,11 @@ def ditl_mask(d):
 
 def main():
     a, b = sys.argv[1:3]
-    A = macbinary(open(a, 'rb').read()); B = macbinary(open(b, 'rb').read())
+    ba, bb = open(a, 'rb').read(), open(b, 'rb').read()
+    A = macbinary(ba); B = macbinary(bb)
     bad = []
     if A[1] != B[1] or A[2] != B[2]: bad.append(f'type/creator {A[1]}{A[2]} vs {B[1]}{B[2]}')
+    if (ba[73] ^ bb[73]) & 0x20: bad.append(f'Finder flag hasBundle {ba[73] >> 5 & 1} vs {bb[73] >> 5 & 1}')
     if A[3] != B[3]: bad.append('data forks differ')
     ra, rb = resources(A[4]), resources(B[4])
     for k in sorted(set(ra) | set(rb)):
