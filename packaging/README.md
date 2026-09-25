@@ -8,8 +8,9 @@ apt download without credentials.
    GitHub then serves the source tarball at
    `https://github.com/bircher988/mac68k-asm/archive/refs/tags/v1.0.tar.gz`.
 2. **Homebrew**: put its checksum into `homebrew/mac68k-asm.rb`
-   (`curl -L <tarball> | shasum -a 256`) and copy the formula into the tap repository (it exists:
-   `github.com/bircher988/homebrew-tap` as `Formula/mac68k-asm.rb`. A tap is nothing but
+   (`curl -L <tarball> | shasum -a 256`) and copy the formula into the tap repository
+   `github.com/bircher988/homebrew-tap` as `Formula/mac68k-asm.rb` (its CI installs, tests and
+   audits the formulae on macOS). A tap is nothing but
    a public GitHub repo named `homebrew-<name>`; `brew install bircher988/tap/mac68k-asm`
    resolves to it. Test locally with `brew install --build-from-source ./homebrew/mac68k-asm.rb`
    and `brew test mac68k-asm`.
