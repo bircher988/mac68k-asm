@@ -19,7 +19,7 @@ Priority: optional
 Architecture: $ARCH
 Maintainer: Tobias Bircher <mac68k@bircher.ai>
 Depends: libc6
-Recommends: hfsutils
+Recommends: mac68k-disk
 Homepage: https://github.com/bircher988/mac68k-asm
 Description: 68k assembler toolchain for the classic Macintosh
  Assembler, linker and resource compiler that build applications for the
