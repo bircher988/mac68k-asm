@@ -28,7 +28,7 @@ Start
 	PEA	WindStorage	; DS variable -> assembled as WindStorage(A5)
 	MOVE.L	#-1,-(SP)	; in front of all other windows
 	_GetNewWindow
-	MOVE.L	(SP)+,WindPtr
+	MOVE.L	(SP)+,WindPtr(A5)	; writing a DS variable: name its base register
 
 	MOVE.L	WindPtr,-(SP)
 	_SetPort		; draw into our window

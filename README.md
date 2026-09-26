@@ -88,7 +88,7 @@ Start
 	PEA	WindStorage	; DS variable -> assembled as WindStorage(A5)
 	MOVE.L	#-1,-(SP)
 	_GetNewWindow
-	MOVE.L	(SP)+,WindPtr
+	MOVE.L	(SP)+,WindPtr(A5)	; writing a DS variable: name its base register
 	...
 	PEA	Message		; code label -> assembled PC-relative
 	_DrawString
@@ -164,7 +164,10 @@ all addresses are stable. Rules of the dialect:
   turned into `MOVEQ`.
 - **`DS.x` does not reserve space in the code** but in the A5 globals area: the first
   DS label sits at `-(256+total)(A5)`, `DS.W`/`DS.L` start on even offsets, the area
-  is rounded up to an even size. References become `d16(A5)`, also as destinations.
+  is rounded up to an even size. A variable named on its own is read as `d16(A5)`
+  (`MOVE.W Var,D0`, `CMP`, `BTST`, `LEA`, `PEA`); where the operand must be alterable -
+  a destination, `CLR`, `TST`, `ADDQ`, `BSET`, ... - name the base register:
+  `MOVE.W D0,Var(A5)`. Both give the same fast `d16(A5)` instruction.
 - `DC.W`/`DC.L` are aligned to even addresses; a label standing alone right before
   them moves along. Instructions at odd addresses get a pad byte, but a label in front
   of them stays odd (and the program crashes with bomb ID=03 - keep data even).
