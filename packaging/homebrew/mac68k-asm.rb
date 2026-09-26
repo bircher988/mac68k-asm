@@ -3,8 +3,8 @@
 class Mac68kAsm < Formula
   desc "68k assembler, linker and resource compiler for the classic Macintosh"
   homepage "https://github.com/bircher988/mac68k-asm"
-  url "https://github.com/bircher988/mac68k-asm/archive/refs/tags/v1.0.tar.gz"
-  sha256 "8e369af996009e212be4cd53c698fe40adb9e817ea719b65e37b88eb08aeaf5f"
+  url "https://github.com/bircher988/mac68k-asm/archive/refs/tags/v1.1.tar.gz"
+  sha256 "2f4392b1c3b63b2ed99f9b457fa7491785bedf64833b15838be8093d7290c21c"
   license "MIT"
   head "https://github.com/bircher988/mac68k-asm.git", branch: "main"
 
