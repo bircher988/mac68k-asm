@@ -27,6 +27,16 @@ n=$(grep -c "6A02 *	BPL.S" "$TMP/regress/Converge.code.lst")
 w=$(grep -c "does not reach" "$TMP/regress.log")
 [ "$n" = 80 ] && [ "$w" = 1 ] || { echo "FAIL: regress/Converge: $n of 80 BPL.S short, $w widening warnings (want 1)"; exit 1; }
 echo "ok: regress/Converge (forward Bcc.S over one instruction stays short)"
+# a bare DS variable: reading is fine, an alterable operand needs Var(A5)
+if "$MAC68K" build "$HERE/regress/BareVar.Job" -o "$TMP/regress" > "$TMP/bare.log" 2>&1; then
+    echo "FAIL: regress/BareVar built, but five lines write a bare DS variable"; exit 1; fi
+n=$(grep -c "needs its base register: write Var(A5)$" "$TMP/bare.log")
+l=$(grep "needs its base register" "$TMP/bare.log" | sed 's/.*line \([0-9]*\):.*/\1/' | tr '\n' ' ')
+[ "$n" = 5 ] && [ "$l" = "9 10 11 12 13 " ] || { cat "$TMP/bare.log"; echo "FAIL: regress/BareVar: want lines 9-13, got '$l'"; exit 1; }
+"$MAC68K" build "$HERE/regress/A5Var.Job" -o "$TMP/regress" > "$TMP/a5.log" 2>&1 || { cat "$TMP/a5.log"; echo "FAIL: regress/A5Var"; exit 1; }
+for w in "3B40FEFE" "426DFEFE" "4A6DFEFE" "526DFEFE" "08ED0001FEFE"; do
+    grep -q "$w" "$TMP/regress/A5Var.lst" || { echo "FAIL: regress/A5Var: $w missing"; exit 1; }; done
+echo "ok: regress/BareVar + A5Var (bare DS variables are read-only, Var(A5) is written)"
 
 if [ -z "${MAC68K_TEST_PROJECTS:-}" ] || [ -z "${MAC68K_TEST_REF:-}" ]; then
     mkdir -p "$TMP/hello"

@@ -85,6 +85,8 @@ typedef struct {
     long imm; int imm_kind;
     unsigned mask;         /* register list */
     int plain_label;       /* a bare code label (for the write-to-code-segment message) */
+    int bare_ds;           /* a DS variable named without its base register (Var, not Var(A5)) */
+    char text[48];         /* the operand as written (for messages) */
     int size_hint;         /* explicit .W/.L on an absolute address */
 } EA;
 
@@ -505,7 +507,7 @@ static int parse_index(Asm *A, const char *s, int *is_long) {
 static void ea_from_val(Asm *A, EA *ea, Val v, int size_hint) {
     ea->disp = v.val; ea->disp_kind = v.kind;
     if (v.kind == K_LABEL) { ea->mode = M_PCD16; ea->plain_label = 1; }
-    else if (v.kind == K_DS) { ea->mode = M_D16; ea->reg = 5; }
+    else if (v.kind == K_DS) { ea->mode = M_D16; ea->reg = 5; ea->bare_ds = 1; }
     else if (size_hint == 4) ea->mode = M_ABSL;
     else if (size_hint == 2) ea->mode = M_ABSW;
     else ea->mode = (v.val >= -32768 && v.val <= 32767) ? M_ABSW : M_ABSL;
@@ -514,6 +516,7 @@ static void ea_from_val(Asm *A, EA *ea, Val v, int size_hint) {
 /* Parse one operand. Returns 1 on success (errors are reported). */
 static int parse_ea(Asm *A, const char *src, EA *ea) {
     memset(ea, 0, sizeof *ea);
+    snprintf(ea->text, sizeof ea->text, "%s", src);
     ea->mode = M_NONE;
     char *s = xstrdup(src);
     size_t n = strlen(s);
@@ -664,7 +667,16 @@ static int parse_ea(Asm *A, const char *src, EA *ea) {
 #define CAT_CTRL_ALT (CAT_CTRL & ~(B(M_PCD16)|B(M_PCIDX)))
 
 static int ea_check(Asm *A, const EA *ea, unsigned cat, const char *mn) {
+    /* A variable named on its own is read as d16(A5), but where the operand must be
+     * alterable (a destination, CLR, TST, ADDQ, BSET ...) the base register has to be
+     * written out: Var(A5). Same rule as for any label - bare names are for reading. */
+    /* errors are reported in the final pass only: the sizing passes see the same lines */
+    if (ea->bare_ds && !(cat & B(M_PCD16))) {
+        if (A->emit) error_at(A, "a DS variable as an alterable operand (%s) needs its base register: write %s(A5)", mn, ea->text);
+        return 0;
+    }
     if (ea->mode <= M_IMM && (cat & B(ea->mode))) return 1;
+    if (!A->emit) return 0;
     if (ea->plain_label && (ea->mode == M_PCD16 || ea->mode == M_PCIDX) && !(cat & B(M_PCD16)))
         error_at(A, "a label in the code segment cannot be written (%s): the 68000 reads PC-relative only. "
                     "Load the address first (LEA label,An) or declare the variable with DS", mn);
