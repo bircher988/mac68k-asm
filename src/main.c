@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAC68K_VERSION "1.1"
+#define MAC68K_VERSION "1.2"
 
 static void usage(FILE *f) {
     fputs("usage: mac68k-asm asm   <Module.Asm>... [-I dir]... [-o out.raw] [-l listing]\n"
