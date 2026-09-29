@@ -140,6 +140,55 @@ A failed build exits with status 1 and leaves the results of an earlier build in
 scripts should check the exit status. When the resources contain a `BNDL`, the application
 gets the Finder's hasBundle flag, so the Finder shows its icons.
 
+### Resource files
+
+A `.R` file starts with the output name and the file type and creator (`APPLHELO`),
+then `INCLUDE` lines and resources: `Type <type> [= <format>]`, a line `  ,<id>` (with
+an optional name before the comma and attributes after the ID), the data, a blank line.
+Formats, as in the MDS RMaker: `WIND`, `DLOG`, `ALRT`, `DITL`, `MENU`, `BNDL`, `FREF`
+(`<file type> <local icon ID> [<file name>]`), `STR ` (one line of text; the original
+spells the format with a trailing space, both spellings work) and `GNRL` for anything
+else (`.H` hex, `.I` 16-bit and `.L` 32-bit numbers, `.P` Pascal and `.S` plain
+strings, `.B` bytes). An application with its own icon needs a creator code of its own,
+a signature resource (type = the creator, ID 0), the icon (`ICN#`: 32 rows of icon bits,
+then 32 rows of mask), a file reference and the bundle that ties them together:
+
+```
+Clock
+APPLCLOK
+
+Type CLOK = STR
+  ,0
+Clock 1.0
+
+Type ICN# = GNRL
+  ,128
+.H
+0007E000 00381C00 00C00300 01000080 02000040 04000020 04000020 08000010
+08010010 10010008 10010008 10010008 20010004 20010004 2001FE04 20000004
+20000004 20000004 10000008 10000008 10000008 08000010 08000010 04000020
+04000020 02000040 01000080 00C00300 00381C00 0007E000 00000000 00000000
+0007E000 003FFC00 00FFFF00 01FFFF80 03FFFFC0 07FFFFE0 07FFFFE0 0FFFFFF0
+0FFFFFF0 1FFFFFF8 1FFFFFF8 1FFFFFF8 3FFFFFFC 3FFFFFFC 3FFFFFFC 3FFFFFFC
+3FFFFFFC 3FFFFFFC 1FFFFFF8 1FFFFFF8 1FFFFFF8 0FFFFFF0 0FFFFFF0 07FFFFE0
+07FFFFE0 03FFFFC0 01FFFF80 00FFFF00 003FFC00 0007E000 00000000 00000000
+
+Type FREF
+  ,128
+APPL 0
+
+Type BNDL
+  ,128
+CLOK 0
+ICN#
+0 128
+FREF
+0 128
+```
+
+With a `BNDL` the application gets the Finder's hasBundle flag, and the Finder shows the
+icon.
+
 `build.sh` is a convenience wrapper for a repository layout with one folder per
 project (`<repo>/projects/<project>/`, shared sources in `<repo>/shared/`); it can
 also put the application onto a copy of a development disk image.

@@ -369,6 +369,40 @@ static void p_bndl(RParser *p, Buf *b) {
     buf_free(&types);
 }
 
+/* STR : one line of text, as a Pascal string (the original RMaker writes the
+ * format "STR " with a trailing space; both spellings are taken). */
+static void p_str(RParser *p, Buf *b) {
+    char *l = next_line(p);
+    if (!l) fail(p, "STR: text expected");
+    pstr_checked(p, b, unescape(strip(l)));
+    free(l);
+}
+
+/* FREF: "<file type> <local icon ID> [file name]" - the file type, the ID of
+ * its icon in the BNDL and an optional Pascal-string name (MDS RMaker). */
+static void p_fref(RParser *p, Buf *b) {
+    char *l = strip(next_line(p));
+    const char *q = l;
+    while (*q && !is_ws((unsigned char)*q)) q++;
+    if (q - l != 4) fail(p, "FREF: file type (4 characters) and icon ID expected: '%s'", l);
+    char type[5];
+    memcpy(type, l, 4);
+    type[4] = 0;
+    put_type4(b, type);
+    while (is_ws((unsigned char)*q)) q++;
+    const char *e = q;
+    while (*e && !is_ws((unsigned char)*e)) e++;
+    if (e == q) fail(p, "FREF: icon ID expected: '%s'", l);
+    char *num = xstrndup(q, e - q);
+    put_i16(p, b, parse_int(p, num));
+    free(num);
+    while (is_ws((unsigned char)*e)) e++;
+    char *name = xstrdup(e);
+    pstr_checked(p, b, unescape(name));
+    free(name);
+    free(l);
+}
+
 static void p_gnrl(RParser *p, Buf *b) {
     int mode = 0;
     for (;;) {
@@ -425,7 +459,8 @@ static ResFn lookup_fmt(const char *fmt) {
     if (str_ieq(fmt, "MENU")) return p_menu;
     if (str_ieq(fmt, "BNDL")) return p_bndl;
     if (str_ieq(fmt, "GNRL")) return p_gnrl;
-    if (str_ieq(fmt, "STR")) return p_gnrl;
+    if (str_ieq(fmt, "STR")) return p_str;
+    if (str_ieq(fmt, "FREF")) return p_fref;
     return NULL;
 }
 

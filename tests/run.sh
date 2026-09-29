@@ -37,6 +37,10 @@ l=$(grep "needs its base register" "$TMP/bare.log" | sed 's/.*line \([0-9]*\):.*
 for w in "3B40FEFE" "426DFEFE" "4A6DFEFE" "526DFEFE" "08ED0001FEFE"; do
     grep -q "$w" "$TMP/regress/A5Var.lst" || { echo "FAIL: regress/A5Var: $w missing"; exit 1; }; done
 echo "ok: regress/BareVar + A5Var (bare DS variables are read-only, Var(A5) is written)"
+# the RMaker formats STR and FREF: the same resources as the original MDS RMaker made
+"$MAC68K" res "$HERE/regress/Formats.R" -o "$TMP/regress" > "$TMP/fmt.log" 2>&1 || { cat "$TMP/fmt.log"; echo "FAIL: regress/Formats"; exit 1; }
+python3 "$HERE/rescmp.py" "$HERE/regress/Formats.ref.bin" "$TMP/regress/ProbeOut.bin" || { echo "FAIL: regress/Formats differs from the MDS RMaker"; exit 1; }
+echo "ok: regress/Formats (STR and FREF as the MDS RMaker makes them)"
 
 if [ -z "${MAC68K_TEST_PROJECTS:-}" ] || [ -z "${MAC68K_TEST_REF:-}" ]; then
     mkdir -p "$TMP/hello"
