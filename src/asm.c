@@ -119,7 +119,9 @@ typedef struct {
     const Line *cur;       /* line being processed (diagnostics) */
     int cur_is_macro_line;
     int cur_index;         /* index of the current source line */
-    unsigned char *branch_long;   /* per source line: a short branch here did not fit once -> stays long */
+    int branch_seq;        /* branches so far on the current source line (a macro call has several) */
+    uint64_t *branch_long; /* per source line, one bit per branch on it: a short branch that did not
+                            * fit once stays long (branches after the 63rd share the last bit) */
 } Asm;
 
 static void error_at(Asm *A, const char *fmt, ...) {
@@ -782,24 +784,27 @@ static int enc_branch(Asm *A, int cc, int suf, char **ops, int nops, unsigned ad
     if (nops != 1) { error_at(A, "%s needs one operand", mn); return 0; }
     if (!eval(A, ops[0], &v)) { error_at(A, "bad branch target '%s'", ops[0]); return 0; }
     long disp = v.val - (long)(addr + 2);
+    uint64_t bit = (uint64_t)1 << (A->branch_seq < 63 ? A->branch_seq : 63);
+    A->branch_seq++;
+    int was_long = (A->branch_long[A->cur_index] & bit) != 0;
     /* a target not yet known in this pass is a label defined further down: forward.
      * A label from another module is unknown to a one-pass assembler as well (MDS). */
     int unknown = v.undefined || v.external;
     int forward = unknown || v.val > (long)addr;
     int use_short;
     if (suf == 'l') { error_at(A, "%s.L is not available on the 68000", mn); return 0; }
-    int fit = (v.undefined || (fits(disp, -128, 127) && disp != 0)) && !A->branch_long[A->cur_index];
+    int fit = (v.undefined || (fits(disp, -128, 127) && disp != 0)) && !was_long;
     if (v.external && (suf == 's' || suf == 'b')) fit = fits(disp, -128, 127) && disp != 0;
     /* Bcc.S to the next instruction: a NOP (MDS). It is as long as a short branch, so it
      * must not mark the branch long: in a pass where earlier code has just grown, a forward
      * Bcc.S over one instruction sees a stale displacement of 0 here, and a permanent .W
      * would push the next such branch into the same state - one per pass, until the
      * assembly no longer converges. */
-    int nop = (suf == 's' || suf == 'b') && disp == 0 && !unknown && cc != 1 && !A->branch_long[A->cur_index];
+    int nop = (suf == 's' || suf == 'b') && disp == 0 && !unknown && cc != 1 && !was_long;
     if (suf == 's' || suf == 'b') use_short = fit;
     else if (forward) use_short = 0;           /* forward: .W, BSR/BRA as JSR/JMP (MDS assembles in one pass) */
     else use_short = fit;                      /* backward: short when it fits, even with an explicit .W (MDS) */
-    if (!use_short && !nop && !v.undefined) A->branch_long[A->cur_index] = 1;   /* never shrink again: guarantees convergence */
+    if (!use_short && !nop && !v.undefined) A->branch_long[A->cur_index] |= bit;   /* never shrink again: guarantees convergence */
     if (!use_short && !nop && (suf == 's' || suf == 'b') && A->emit) warn_at(A, "%s.S does not reach its target, widened to .W", mn);
     if (use_short) { EMIT(0x6000 | (cc << 8) | ((unsigned)disp & 0xff)); return 1; }
     if (nop) { EMIT(0x4E71); return 1; }
@@ -1389,7 +1394,7 @@ static void run_pass(Asm *A) {
             A->module = ln->module; A->scope[0] = 0; ended = 0; A->if_depth = 0;
             if (A->module > 0) emit_pad(A);
         }
-        A->cur = ln; A->cur_is_macro_line = 0; A->cur_index = i;
+        A->cur = ln; A->cur_is_macro_line = 0; A->cur_index = i; A->branch_seq = 0;
         unsigned start = A->pc, code_start = (unsigned)A->code.n;
         if (!ln->in_macro_def && !ended) {
             char *l, *o, *a, *r;
@@ -1548,7 +1553,7 @@ int asm_assemble(const char *const *files, int nfiles, const AsmOptions *opt, As
     for (int i = 0; i < nfiles; i++) load_file(A, files[i], i);
     A->nmodules = nfiles;
     prescan(A);
-    A->branch_long = xcalloc(A->lines.n + 1, 1);
+    A->branch_long = xcalloc(A->lines.n + 1, sizeof *A->branch_long);
     int iter;
     for (iter = 0; iter < MAX_ITER; iter++) {
         A->emit = 0;
