@@ -27,6 +27,12 @@ n=$(grep -c "6A02 *	BPL.S" "$TMP/regress/Converge.code.lst")
 w=$(grep -c "does not reach" "$TMP/regress.log")
 [ "$n" = 80 ] && [ "$w" = 1 ] || { echo "FAIL: regress/Converge: $n of 80 BPL.S short, $w widening warnings (want 1)"; exit 1; }
 echo "ok: regress/Converge (forward Bcc.S over one instruction stays short)"
+# a macro call is one line with several branches: a long one must not widen the short ones
+"$MAC68K" build "$HERE/regress/MacroBranch.Job" -o "$TMP/regress" > "$TMP/macro.log" 2>&1 || { cat "$TMP/macro.log"; echo "FAIL: regress/MacroBranch"; exit 1; }
+n=$(grep -c "4A406B0000086F02" "$TMP/regress/MacroBranch.lst")
+w=$(grep -c "does not reach" "$TMP/macro.log")
+[ "$n" = 3 ] && [ "$w" = 0 ] || { echo "FAIL: regress/MacroBranch: $n of 3 BLE.S short, $w widening warnings (want 0)"; exit 1; }
+echo "ok: regress/MacroBranch (short branches in a macro stay short)"
 # a bare DS variable: reading is fine, an alterable operand needs Var(A5)
 if "$MAC68K" build "$HERE/regress/BareVar.Job" -o "$TMP/regress" > "$TMP/bare.log" 2>&1; then
     echo "FAIL: regress/BareVar built, but five lines write a bare DS variable"; exit 1; fi
