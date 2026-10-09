@@ -227,16 +227,18 @@ all addresses are stable. Rules of the dialect:
   strings share one copy.
 - Symbols are case-insensitive. Every module has its own namespace; `XDEF` exports a
   symbol, `XREF` is accepted and ignored. `@local` labels are valid between two
-  global labels. `Reg EQU A3` defines a register alias. A duplicate `EQU` in one
-  module is a warning; the last definition wins.
+  global labels. `Reg EQU A3` defines a register alias. A duplicate `EQU` with
+  another value is a warning; the last definition wins. `SET` redefines without a warning.
 - `Include`, `.TRAP _Name $Axxx` (OS traps take `,SYS`, `,ASYNC`, `,IMMED`,
   `,CLEAR`), `.MACRO name` / `%1..%9` / `.ENDM`, `IF` / `ELSE` / `ENDIF` with
   `'a' = 'b'`, `'a' <> 'b'` or numeric comparisons, `EQU`, `SET`, `DC`, `DCB`, `DS`,
   `EVEN`, `END`.
-- Every `.TRAP` in `inc/Traps.D` carries the ROM that introduced it (`64K` or
-  `128K`). A program is assumed to target the 64K ROM (Macintosh 128K/512K); using a
+- Every `.TRAP` in `inc/Traps.D` carries the ROM that introduced it (`64K`, `128K` or
+  `256K`). A program is assumed to target the 64K ROM (Macintosh 128K/512K); using a
   128K-ROM trap (Macintosh Plus, 512Ke) produces a warning. `MAC68K_ROM=128` declares
-  the program a Plus program and turns the warnings off.
+  the program a Plus program and turns the warnings off. Traps of the 256K ROM
+  (Macintosh SE, II) that System 4.1 and later also provide on the Plus - `_SysEnvirons`,
+  `_WaitNextEvent`, the Sound Manager, `_ShutDown` - warn unless `MAC68K_ROM=256`.
 
 Diagnostics name the file and line of the original source, also inside includes.
 

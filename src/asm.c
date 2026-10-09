@@ -64,7 +64,7 @@ typedef struct Sym {
     int def_module;        /* module that defines the symbol */
     int def_count;         /* definitions seen in the current pass (redefinition check) */
     Macro *macro;
-    int rom;               /* SYM_TRAP: ROM that introduced the trap (64 or 128), 0 = unknown */
+    int rom;               /* SYM_TRAP: ROM that introduced the trap (64, 128 or 256), 0 = unknown */
     struct Sym *next;
 } Sym;
 
@@ -113,6 +113,7 @@ typedef struct {
     unsigned ds_size[MAX_MODULES], ds_size_prev[MAX_MODULES];   /* DS bytes per module (rounded to even) */
     StrList lit[MAX_MODULES];          /* string literals used as operands ('text'), per module, deduplicated */
     Sym *pending[64]; int npending;   /* labels standing alone at pc, movable by DC.W alignment */
+    int by_set;                       /* the symbol being defined comes from SET (may redefine) */
     int if_stack[64]; int if_depth;   /* 1 = active, 0 = skipping */
     int macro_depth;
     FILE *lst;
@@ -1148,7 +1149,7 @@ static Sym *define_sym(Asm *A, const char *name, int kind, long val) {
     if (s->kind == SYM_MACRO || s->kind == SYM_TRAP) { error_at(A, "'%s' is already a macro or trap name", name); return s; }
     s->def_count++;
     if (s->def_count > 1 && A->emit) {
-        if (kind == SYM_CONST || kind == SYM_REG) { if (s->def_count == 2) warn_at(A, "%s defined by EQU more than once, the last definition wins", name); }
+        if (kind == SYM_CONST || kind == SYM_REG) { if (s->def_count == 2 && !A->by_set && s->val != val) warn_at(A, "%s defined by EQU more than once with another value, the last definition wins", name); }
         else error_at(A, "symbol '%s' defined more than once", name);
     }
     s->kind = kind; s->val = val; s->defined = 1; s->def_module = A->module;
@@ -1276,7 +1277,9 @@ static void process_text(Asm *A, const char *text) {
         if (r >= 0 && r < 16) { Sym *s = define_sym(A, label, SYM_REG, r); s->reg = r; goto blocking; }
         Val v;
         if (!eval(A, args, &v)) { error_at(A, "bad expression '%s'", args); goto blocking; }
+        A->by_set = !strcmp(mn, "set");         /* SET may redefine without a warning */
         Sym *s = define_sym(A, label, SYM_CONST, v.val);
+        A->by_set = 0;
         s->vkind = v.kind == K_REG ? K_CONST : v.kind;
         goto blocking;
     }
@@ -1338,8 +1341,10 @@ static void process_text(Asm *A, const char *text) {
                 else if (str_ieq(m, "clear") || str_ieq(m, "immed")) word |= 0x200;
                 else error_at(A, "unknown trap modifier '%s'", m);
             }
-            if (A->emit && s->rom > 64 && !A->opt->rom128)
-                warn_at(A, "%s needs the %dK ROM (Macintosh Plus, 512Ke); MAC68K_ROM=128 accepts it", op, s->rom);
+            if (A->emit && s->rom > A->opt->rom) {
+                if (s->rom == 128) warn_at(A, "%s needs the 128K ROM (Macintosh Plus, 512Ke); MAC68K_ROM=128 accepts it", op);
+                else warn_at(A, "%s needs the 256K ROM (Macintosh SE, II) or System 4.1 or later on the Plus; MAC68K_ROM=256 accepts it", op);
+            }
             emit_word(A, word);
             goto blocking;
         }
@@ -1500,10 +1505,11 @@ static void prescan(Asm *A) {
                     Sym *s = sym_find_exact(A, lname, -1);
                     if (!s) s = sym_create(A, lname, -1, SYM_TRAP);
                     s->kind = SYM_TRAP; s->val = v.val; s->defined = 1;
-                    if (n == 3) {           /* optional ROM field: 64K or 128K */
+                    if (n == 3) {           /* optional ROM field: 64K, 128K or 256K */
                         if (str_ieq(parts[2], "64k")) s->rom = 64;
                         else if (str_ieq(parts[2], "128k")) s->rom = 128;
-                        else error_at(A, ".TRAP: unknown ROM '%s' (use 64K or 128K)", parts[2]);
+                        else if (str_ieq(parts[2], "256k")) s->rom = 256;
+                        else error_at(A, ".TRAP: unknown ROM '%s' (use 64K, 128K or 256K)", parts[2]);
                     }
                     free(lname);
                 }

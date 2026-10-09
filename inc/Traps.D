@@ -3,9 +3,11 @@
 ; documented in Inside Macintosh; generated file, do not edit by hand.
 
 ; Usage: _Name, OS traps also _Name ,ASYNC / ,SYS / ,IMMED / ,CLEAR. The third field of
-; every .TRAP names the ROM that first provided it: 64K (Macintosh 128K/512K) or
-; 128K (Macintosh Plus, 512Ke). The assembler warns when a program built for the 64K
-; ROM uses a 128K-ROM trap (MAC68K_ROM=128 turns the warning off).
+; every .TRAP names the ROM that first provided it: 64K (Macintosh 128K/512K), 128K
+; (Macintosh Plus, 512Ke) or 256K (Macintosh SE, II - on the Plus these traps come with
+; System 4.1 or later). The assembler warns when a program built for the 64K ROM uses a
+; 128K-ROM trap (MAC68K_ROM=128 turns the warning off) and when a program built for the
+; 64K or 128K ROM uses a 256K-ROM trap (MAC68K_ROM=256 accepts them).
 
 ; option bits for OS trap modifiers
 immed	EQU	$200
@@ -606,6 +608,63 @@ newOS	EQU	$0200
 .TRAP	_HSetState	$A06A	128K
 .TRAP	_InitFS	$A06C	128K
 .TRAP	_InitEvents	$A06D	128K
+
+; Trap Manager with the split OS/Toolbox tables, HFS, SCSI, Fixed/Frac mathematics,
+; styled TextEdit (Inside Macintosh IV)
+.TRAP	_GetOSTrapAddress	$A346	128K
+.TRAP	_GetToolTrapAddress	$A746	128K
+.TRAP	_SetOSTrapAddress	$A247	128K
+.TRAP	_SetToolTrapAddress	$A647	128K
+.TRAP	_HFSDispatch	$A260	128K
+.TRAP	_ClkNoMem	$A053	128K
+.TRAP	_SCSIDispatch	$A815	128K
+.TRAP	_SetFractEnable	$A814	128K
+.TRAP	_FixATan2	$A818	128K
+.TRAP	_TEGetOffset	$A83C	128K
+.TRAP	_TEDispatch	$A83D	128K
+.TRAP	_TEStyleNew	$A83E	128K
+.TRAP	_Long2Fix	$A83F	128K
+.TRAP	_Fix2Long	$A840	128K
+.TRAP	_Fix2Frac	$A841	128K
+.TRAP	_Frac2Fix	$A842	128K
+.TRAP	_Fix2X	$A843	128K
+.TRAP	_X2Fix	$A844	128K
+.TRAP	_Frac2X	$A845	128K
+.TRAP	_X2Frac	$A846	128K
+.TRAP	_FracCos	$A847	128K
+.TRAP	_FracSin	$A848	128K
+.TRAP	_FracSqrt	$A849	128K
+.TRAP	_FracMul	$A84A	128K
+.TRAP	_FracDiv	$A84B	128K
+.TRAP	_FixDiv	$A84D	128K
+
+; ---- 256K ROM (Macintosh SE, II) - on the Plus with System 4.1 or later (Inside Macintosh V) ----
+.TRAP	_SysEnvirons	$A090	256K
+.TRAP	_StripAddress	$A055	256K
+.TRAP	_NMInstall	$A05E	256K
+.TRAP	_NMRemove	$A05F	256K
+.TRAP	_DeferUserFn	$A08F	256K
+.TRAP	_WaitNextEvent	$A860	256K
+.TRAP	_ShutDown	$A895	256K
+.TRAP	_ScriptUtil	$A8B5	256K
+.TRAP	_PrGlue	$A8FD	256K
+.TRAP	_SndDisposeChannel	$A801	256K
+.TRAP	_SndAddModifier	$A802	256K
+.TRAP	_SndDoCommand	$A803	256K
+.TRAP	_SndDoImmediate	$A804	256K
+.TRAP	_SndPlay	$A805	256K
+.TRAP	_SndControl	$A806	256K
+.TRAP	_SndNewChannel	$A807	256K
+.TRAP	_InitProcMenu	$A808	256K
+.TRAP	_GetCVariant	$A809	256K
+.TRAP	_GetWVariant	$A80A	256K
+.TRAP	_PopUpMenuSelect	$A80B	256K
+.TRAP	_RGetResource	$A80C	256K
+.TRAP	_HOpenResFile	$A81A	256K
+.TRAP	_HCreateResFile	$A81B	256K
+.TRAP	_InvalMenuBar	$A81D	256K
+.TRAP	_GetItemCmd	$A84E	256K
+.TRAP	_SetItemCmd	$A84F	256K
 
 ; ---- HFS calls (128K ROM): parameter-block calls through _TFSCore ----
 ; _Name [pb][,mode]: pb is loaded into A0 when given; mode REGS, ASYNC, SYS or IMMED

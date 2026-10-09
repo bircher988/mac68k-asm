@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAC68K_VERSION "1.2.1"
+#define MAC68K_VERSION "1.2.2"
 
 static void usage(FILE *f) {
     fputs("usage: mac68k-asm asm   <Module.Asm>... [-I dir]... [-o out.raw] [-l listing]\n"
@@ -27,7 +27,7 @@ static void usage(FILE *f) {
           "  -o       output file (asm) or output directory (link, res, build; default .)\n"
           "  -l file  listing file (asm)\n"
           "\n"
-          "environment: MAC68K_INC (built-in include directory), MAC68K_ROM=128 (target the 128K ROM: no warnings for its traps)\n", f);
+          "environment: MAC68K_INC (built-in include directory), MAC68K_ROM=128 or 256 (target the 128K ROM, or the 256K ROM / System 4.1+: no warnings for their traps)\n", f);
 }
 
 static int bad_usage(void) { usage(stderr); return 2; }
@@ -81,9 +81,11 @@ int main(int argc, char **argv) {
     if (bi) { strlist_add(&inc, bi); free(bi); }
     AsmOptions opt = {0};
     opt.incdirs = (const char *const *)inc.v; opt.nincdirs = inc.n;
-    const char *rom = getenv("MAC68K_ROM");          /* 64 (default) or 128 */
+    const char *rom = getenv("MAC68K_ROM");          /* 64 (default), 128 or 256 */
     const char *rom_old = getenv("MAC68K_ROM128");
-    opt.rom128 = (rom && atoi(rom) >= 128) || (rom_old && *rom_old && strcmp(rom_old, "0") != 0);
+    opt.rom = 64;
+    if (rom && atoi(rom) >= 256) opt.rom = 256;
+    else if ((rom && atoi(rom) >= 128) || (rom_old && *rom_old && strcmp(rom_old, "0") != 0)) opt.rom = 128;
     opt.listing = listing;
 
     if (is_asm) {
