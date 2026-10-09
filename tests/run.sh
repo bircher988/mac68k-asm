@@ -33,6 +33,14 @@ n=$(grep -c "4A406B0000086F02" "$TMP/regress/MacroBranch.lst")
 w=$(grep -c "does not reach" "$TMP/macro.log")
 [ "$n" = 3 ] && [ "$w" = 0 ] || { echo "FAIL: regress/MacroBranch: $n of 3 BLE.S short, $w widening warnings (want 0)"; exit 1; }
 echo "ok: regress/MacroBranch (short branches in a macro stay short)"
+# SET redefines silently; ROM tiers: a 64K build warns about 128K and 256K traps, 128 about 256K, 256 not at all
+for rom in 64 128 256; do
+    MAC68K_ROM=$rom "$MAC68K" asm "$HERE/regress/SetRom.Asm" -o "$TMP/setrom.raw" > "$TMP/setrom$rom.log" 2>&1 || { cat "$TMP/setrom$rom.log"; echo "FAIL: regress/SetRom (MAC68K_ROM=$rom)"; exit 1; }
+done
+grep -q "more than once" "$TMP/setrom64.log" && { echo "FAIL: regress/SetRom: SET warned about a redefinition"; exit 1; }
+a=$(grep -c "needs the" "$TMP/setrom64.log"); b=$(grep -c "needs the" "$TMP/setrom128.log"); c=$(grep -c "needs the" "$TMP/setrom256.log")
+[ "$a" = 2 ] && [ "$b" = 1 ] && [ "$c" = 0 ] || { echo "FAIL: regress/SetRom: ROM warnings $a/$b/$c for MAC68K_ROM=64/128/256 (want 2/1/0)"; exit 1; }
+echo "ok: regress/SetRom (SET redefines silently, ROM tiers 64/128/256 warn as expected)"
 # a bare DS variable: reading is fine, an alterable operand needs Var(A5)
 if "$MAC68K" build "$HERE/regress/BareVar.Job" -o "$TMP/regress" > "$TMP/bare.log" 2>&1; then
     echo "FAIL: regress/BareVar built, but five lines write a bare DS variable"; exit 1; fi

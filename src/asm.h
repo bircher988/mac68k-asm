@@ -5,7 +5,8 @@
 
 typedef struct {
     const char *const *incdirs; int nincdirs;  /* searched after the including file's directory */
-    int rom128;              /* nonzero: the program targets the 128K ROM (no warnings for its traps) */
+    int rom;                 /* ROM the program targets: 64 (default), 128 (Plus, 512Ke) or 256 (SE, II, or
+                              * any Mac with System 4.1 or later): traps that need more produce a warning */
     const char *listing;     /* path for the listing file, or NULL */
 } AsmOptions;
 
