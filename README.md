@@ -46,8 +46,8 @@ brew install bircher988/tap/mac68k-asm
 (Raspberry Pi) and amd64 (PC). Download it and install it with apt:
 
 ```
-wget https://github.com/bircher988/mac68k-asm/releases/download/v1.2.1/mac68k-asm_1.2.1_arm64.deb
-sudo apt install ./mac68k-asm_1.2.1_arm64.deb      # or _amd64.deb on a PC
+wget https://github.com/bircher988/mac68k-asm/releases/download/v1.2.3/mac68k-asm_1.2.3_arm64.deb
+sudo apt install ./mac68k-asm_1.2.3_arm64.deb      # or _amd64.deb on a PC
 ```
 
 [mac68k-disk](https://github.com/bircher988/mac68k-disk) puts applications onto disk images.
