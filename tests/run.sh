@@ -33,6 +33,14 @@ n=$(grep -c "4A406B0000086F02" "$TMP/regress/MacroBranch.lst")
 w=$(grep -c "does not reach" "$TMP/macro.log")
 [ "$n" = 3 ] && [ "$w" = 0 ] || { echo "FAIL: regress/MacroBranch: $n of 3 BLE.S short, $w widening warnings (want 0)"; exit 1; }
 echo "ok: regress/MacroBranch (short branches in a macro stay short)"
+# code that grows in a later pass (a short branch that cannot reach, an address that needs a long
+# word) must not widen the short calls behind it, in its own module or in a later one
+"$MAC68K" asm "$HERE/regress/ShortCall.Asm" "$HERE/regress/ShortCall2.Asm" -o "$TMP/regress/ShortCall.raw" -l "$TMP/regress/ShortCall.lst" > "$TMP/short.log" 2>&1 || { cat "$TMP/short.log"; echo "FAIL: regress/ShortCall"; exit 1; }
+n=$(grep -c -E "^[0-9A-F]{8} 610[26] " "$TMP/regress/ShortCall.lst")
+l=$(grep -c -E "^[0-9A-F]{8} (67000002|4EBA0002) " "$TMP/regress/ShortCall.lst")
+w=$(grep -c "does not reach" "$TMP/short.log")
+[ "$n" = 4 ] && [ "$l" = 2 ] && [ "$w" = 3 ] || { echo "FAIL: regress/ShortCall: $n of 4 BSR.S short, $l of 2 other branches long, $w widening warnings (want 3)"; exit 1; }
+echo "ok: regress/ShortCall (short calls behind code that has grown stay short)"
 # SET redefines silently; ROM tiers: a 64K build warns about 128K and 256K traps, 128 about 256K, 256 not at all
 for rom in 64 128 256; do
     MAC68K_ROM=$rom "$MAC68K" asm "$HERE/regress/SetRom.Asm" -o "$TMP/setrom.raw" > "$TMP/setrom$rom.log" 2>&1 || { cat "$TMP/setrom$rom.log"; echo "FAIL: regress/SetRom (MAC68K_ROM=$rom)"; exit 1; }

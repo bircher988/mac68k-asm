@@ -95,6 +95,8 @@ enum { M_DN = 0, M_AN = 1, M_IND = 2, M_INC = 3, M_DEC = 4, M_D16 = 5, M_IDX = 6
        M_ABSW = 8, M_ABSL = 9, M_PCD16 = 10, M_PCIDX = 11, M_IMM = 12,
        M_SR = 20, M_CCR = 21, M_USP = 22, M_REGLIST = 23, M_NONE = 30 };
 
+typedef struct { int line, seq; unsigned addr; } BranchAt;   /* a branch: its source line, its place on it, its address */
+
 typedef struct {
     Lines lines;
     int nmodules;
@@ -123,6 +125,9 @@ typedef struct {
     int branch_seq;        /* branches so far on the current source line (a macro call has several) */
     uint64_t *branch_long; /* per source line, one bit per branch on it: a short branch that did not
                             * fit once stays long (branches after the 63rd share the last bit) */
+    BranchAt *at, *was;    /* where each branch stands in this pass, and where each stood in the
+                            * previous one; both in the order the branches come */
+    int nat, at_cap, nwas, was_cap, was_next;
 } Asm;
 
 static void error_at(Asm *A, const char *fmt, ...) {
@@ -213,7 +218,9 @@ static int reg_by_name(Asm *A, const char *tok) {
 
 /* ---------------------------------------------------------- expressions ---- */
 
-typedef struct { long val; int kind; int undefined; int external; } Val;   /* external: defined in another module */
+/* external: defined in another module. later: a label this pass has not reached yet (it is
+ * defined further down, or in a later module): its value is still that of the previous pass. */
+typedef struct { long val; int kind; int undefined; int external; int later; } Val;
 
 typedef struct { Asm *A; const char *s; int err; } Expr;
 
@@ -222,12 +229,13 @@ static int is_ident_char(int c) { return isalnum(c) || c == '_' || c == '@' || c
 
 static void skip_ws(Expr *e) { while (*e->s == ' ' || *e->s == '\t') e->s++; }
 
-static Val val_const(long v) { Val r = { v, K_CONST, 0, 0 }; return r; }
+static Val val_const(long v) { Val r = { v, K_CONST, 0, 0, 0 }; return r; }
 
 static Val combine(Val a, Val b, int op) {
     Val r = val_const(0);
     r.undefined = a.undefined || b.undefined;
     r.external = a.external || b.external;
+    r.later = a.later || b.later;
     switch (op) {
     case '+': r.val = a.val + b.val;
         r.kind = (a.kind == K_CONST) ? b.kind : (b.kind == K_CONST ? a.kind : K_CONST); break;
@@ -306,6 +314,7 @@ static Val expr_primary(Expr *e) {
         v.val = sym->kind == SYM_REG ? sym->reg : sym->val;
         if (!sym->defined) v.undefined = 1;
         else if (sym->kind == SYM_LABEL && sym->def_module != A->module) v.external = 1;
+        if (sym->kind == SYM_LABEL && sym->defined && sym->def_count == 0) v.later = 1;
         return v;
     }
     e->err = 1;
@@ -780,34 +789,60 @@ static int enc_imm_ea(Asm *A, unsigned op, int sz, EA *src, EA *dst, unsigned ad
     return ea_ext(A, dst, addr, w, nw, sz);
 }
 
+/* Note where a branch stands in this pass. Returns where it stood in the previous pass, or -1
+ * if it was not there (the first pass; conditional code that came and went). Both lists are in
+ * the order of the source, so one walk along the old one finds it. */
+static long branch_was_at(Asm *A, int seq, unsigned addr) {
+    int line = A->cur_index;
+    if (A->nat == A->at_cap) { A->at_cap = A->at_cap ? A->at_cap * 2 : 1024; A->at = xrealloc(A->at, A->at_cap * sizeof *A->at); }
+    BranchAt *b = &A->at[A->nat++];
+    b->line = line; b->seq = seq; b->addr = addr;
+    const BranchAt *w = A->was;
+    int k = A->was_next;
+    while (k < A->nwas && (w[k].line < line || (w[k].line == line && w[k].seq < seq))) k++;
+    A->was_next = k;
+    return k < A->nwas && w[k].line == line && w[k].seq == seq ? (long)w[k].addr : -1;
+}
+
 static int enc_branch(Asm *A, int cc, int suf, char **ops, int nops, unsigned addr, unsigned *w, int *nw, const char *mn) {
     Val v;
     if (nops != 1) { error_at(A, "%s needs one operand", mn); return 0; }
     if (!eval(A, ops[0], &v)) { error_at(A, "bad branch target '%s'", ops[0]); return 0; }
     long disp = v.val - (long)(addr + 2);
-    uint64_t bit = (uint64_t)1 << (A->branch_seq < 63 ? A->branch_seq : 63);
-    A->branch_seq++;
+    int seq = A->branch_seq++;
+    uint64_t bit = (uint64_t)1 << (seq < 63 ? seq : 63);
     int was_long = (A->branch_long[A->cur_index] & bit) != 0;
+    /* The distance the size is decided on. A label further down has not been reached yet in this
+     * pass: its address is still that of the previous pass, while the branch itself may have moved
+     * since, because code above it has grown (a short branch that did not reach, an address that
+     * turned out to need a long word). So the distance is measured from where the branch stood in
+     * that pass: it is then the distance the two really had there. Measured from where the branch
+     * stands now it comes out too small by the growth - a BSR.S over one instruction seemed to
+     * call the very next instruction and was widened for good, a Bcc.S over one instruction seemed
+     * to be a NOP, and a branch without a size seemed to go backward. */
+    long was_at = branch_was_at(A, seq, addr);
+    long dist = v.later && was_at >= 0 ? v.val - (was_at + 2) : disp;
     /* a target not yet known in this pass is a label defined further down: forward.
      * A label from another module is unknown to a one-pass assembler as well (MDS). */
     int unknown = v.undefined || v.external;
-    int forward = unknown || v.val > (long)addr;
+    int forward = unknown || v.later || v.val > (long)addr;
     int use_short;
     if (suf == 'l') { error_at(A, "%s.L is not available on the 68000", mn); return 0; }
-    int fit = (v.undefined || (fits(disp, -128, 127) && disp != 0)) && !was_long;
-    if (v.external && (suf == 's' || suf == 'b')) fit = fits(disp, -128, 127) && disp != 0;
-    /* Bcc.S to the next instruction: a NOP (MDS). It is as long as a short branch, so it
-     * must not mark the branch long: in a pass where earlier code has just grown, a forward
-     * Bcc.S over one instruction sees a stale displacement of 0 here, and a permanent .W
-     * would push the next such branch into the same state - one per pass, until the
-     * assembly no longer converges. */
-    int nop = (suf == 's' || suf == 'b') && disp == 0 && !unknown && cc != 1 && !was_long;
+    int fit = (v.undefined || (fits(dist, -128, 127) && dist != 0)) && !was_long;
+    if (v.external && (suf == 's' || suf == 'b')) fit = fits(dist, -128, 127) && dist != 0;
+    /* Bcc.S to the next instruction: a NOP (MDS). It is as long as a short branch, so it does
+     * not mark the branch long. */
+    int nop = (suf == 's' || suf == 'b') && dist == 0 && !unknown && cc != 1 && !was_long;
     if (suf == 's' || suf == 'b') use_short = fit;
     else if (forward) use_short = 0;           /* forward: .W, BSR/BRA as JSR/JMP (MDS assembles in one pass) */
     else use_short = fit;                      /* backward: short when it fits, even with an explicit .W (MDS) */
     if (!use_short && !nop && !v.undefined) A->branch_long[A->cur_index] |= bit;   /* never shrink again: guarantees convergence */
     if (!use_short && !nop && (suf == 's' || suf == 'b') && A->emit) warn_at(A, "%s.S does not reach its target, widened to .W", mn);
-    if (use_short) { EMIT(0x6000 | (cc << 8) | ((unsigned)disp & 0xff)); return 1; }
+    if (use_short) {
+        /* the sizes are those of the last sizing pass; the code written with them must agree */
+        if (A->emit && !v.undefined && (disp == 0 || !fits(disp, -128, 127))) error_at(A, "%s.S: the assembly has not settled (distance %ld)", mn, disp);
+        EMIT(0x6000 | (cc << 8) | ((unsigned)disp & 0xff)); return 1;
+    }
     if (nop) { EMIT(0x4E71); return 1; }
     if (forward && (cc == 0 || cc == 1)) {     /* BRA/BSR to an unknown label -> JMP/JSR d16(PC) (MDS) */
         EMIT(cc == 0 ? 0x4EFA : 0x4EBA);
@@ -1388,6 +1423,9 @@ static void emit_literals(Asm *A, int m) {
 /* One pass over all lines. */
 static void run_pass(Asm *A) {
     A->pc = 0; A->ds_off = 0; A->module = -1; A->scope[0] = 0; A->npending = 0; A->if_depth = 0; A->macro_depth = 0;
+    BranchAt *spare = A->was; int spare_cap = A->was_cap;      /* the branches of the pass before this one become the old ones */
+    A->was = A->at; A->nwas = A->nat; A->was_cap = A->at_cap; A->was_next = 0;
+    A->at = spare; A->at_cap = spare_cap; A->nat = 0;
     for (int h = 0; h < HASH_SIZE; h++)
         for (Sym *s = A->tab[h]; s; s = s->next) { s->prev = s->val; s->def_count = 0; }
     int ended = 0;
@@ -1569,6 +1607,10 @@ int asm_assemble(const char *const *files, int nfiles, const AsmOptions *opt, As
         A->ds_total_prev = A->ds_off;
         for (int h = 0; h < HASH_SIZE && !changed; h++)
             for (Sym *s = A->tab[h]; s; s = s->next) if (s->val != s->prev) { changed = 1; break; }
+        /* and every branch must stand where it stood: the sizes of this pass were decided from the
+         * places of the previous one, and the final pass has to find the same distances */
+        if (!changed && A->nat != A->nwas) changed = 1;
+        for (int k = 0; k < A->nat && !changed; k++) if (A->at[k].addr != A->was[k].addr) changed = 1;
         if (!changed) break;
     }
     if (iter == MAX_ITER) { error_at(A, "assembly does not converge"); }
