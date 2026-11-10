@@ -147,7 +147,8 @@ then `INCLUDE` lines and resources: `Type <type> [= <format>]`, a line `  ,<id>`
 an optional name before the comma and attributes after the ID), the data, a blank line.
 Formats, as in the MDS RMaker: `WIND`, `DLOG`, `ALRT`, `DITL`, `MENU`, `BNDL`, `FREF`
 (`<file type> <local icon ID> [<file name>]`), `STR ` (one line of text; the original
-spells the format with a trailing space, both spellings work) and `GNRL` for anything
+spells the format with a trailing space, both spellings work), `STR#` (the number of
+strings, then one string on a line each) and `GNRL` for anything
 else (`.H` hex, `.I` 16-bit and `.L` 32-bit numbers, `.P` Pascal and `.S` plain
 strings, `.B` bytes). An application with its own icon needs a creator code of its own,
 a signature resource (type = the creator, ID 0), the icon (`ICN#`: 32 rows of icon bits,
@@ -196,7 +197,8 @@ also put the application onto a copy of a development disk image.
 ## The assembler
 
 The assembler reads the whole module set, resolves includes once, and iterates until
-all addresses are stable. Rules of the dialect:
+all addresses are stable. An include file is read for the first module that asks for it;
+what it defines is there for every module that includes it. Rules of the dialect:
 
 - **Labels** are addressed PC-relative, **constants** (`$904`) as abs.W when they fit
   in 16 bits, abs.L otherwise. `d(PC)` and `d(PC,Xn)` with a plain number use the

@@ -35,14 +35,15 @@ typedef struct {
     int lineno;
     int module;
     int in_macro_def;      /* part of a .MACRO definition: skipped in the passes */
+    const char *inc;       /* the include file the line comes from, NULL: the module's own source */
 } Line;
 
 typedef struct { Line *v; int n, cap; } Lines;
 
-static void lines_add(Lines *l, const char *text, const char *file, int lineno, int module) {
+static void lines_add(Lines *l, const char *text, const char *file, int lineno, int module, const char *inc) {
     if (l->n == l->cap) { l->cap = l->cap ? l->cap * 2 : 1024; l->v = xrealloc(l->v, l->cap * sizeof *l->v); }
     Line *ln = &l->v[l->n++];
-    ln->text = xstrdup(text); ln->file = file; ln->lineno = lineno; ln->module = module; ln->in_macro_def = 0;
+    ln->text = xstrdup(text); ln->file = file; ln->lineno = lineno; ln->module = module; ln->in_macro_def = 0; ln->inc = inc;
 }
 
 /* -------------------------------------------------------------- symbols ---- */
@@ -63,6 +64,7 @@ typedef struct Sym {
     int defined;           /* defined in some pass (or a macro/trap) */
     int def_module;        /* module that defines the symbol */
     int def_count;         /* definitions seen in the current pass (redefinition check) */
+    const char *inc;       /* defined in this include file (NULL: in a module's own source) */
     Macro *macro;
     int rom;               /* SYM_TRAP: ROM that introduced the trap (64, 128 or 256), 0 = unknown */
     struct Sym *next;
@@ -104,6 +106,7 @@ typedef struct {
     StrList xdef[MAX_MODULES];
     const AsmOptions *opt;
     StrList included;      /* files already included */
+    StrList mod_inc[MAX_MODULES];   /* per module: the include files it asked for, directly or through another one */
 
     /* pass state */
     int pass, emit, errors;
@@ -152,13 +155,23 @@ static Sym *sym_find_exact(Asm *A, const char *lname, int module) {
     return NULL;
 }
 
-/* Lookup as the modules see it: own private symbols first, then globals, then a
- * private symbol of exactly one other module (the linker's single namespace). */
+static int module_includes(Asm *A, int module, const char *inc) {
+    if (module < 0 || module >= MAX_MODULES) return 0;
+    for (int i = 0; i < A->mod_inc[module].n; i++) if (!strcmp(A->mod_inc[module].v[i], inc)) return 1;
+    return 0;
+}
+
+/* Lookup as the modules see it: own private symbols first, then globals, then what an
+ * include file of the module defines (an include file is read once, for the first module
+ * that asks for it), then a private symbol of exactly one other module (the linker's
+ * single namespace). */
 static Sym *sym_lookup(Asm *A, const char *lname, int module) {
     Sym *s = sym_find_exact(A, lname, module);
     if (s) return s;
     s = sym_find_exact(A, lname, -1);
     if (s) return s;
+    for (Sym *t = A->tab[hash_str(lname)]; t; t = t->next)
+        if (t->inc && t->module != module && !strcmp(t->name, lname) && module_includes(A, module, t->inc)) return t;
     Sym *found = NULL; int n = 0;
     for (Sym *t = A->tab[hash_str(lname)]; t; t = t->next)
         if (!strcmp(t->name, lname) && t->module != module) { found = t; n++; }
@@ -183,7 +196,7 @@ static int name_is_xdef(Asm *A, const char *lname, int module) {
 static Sym *sym_for_def(Asm *A, const char *lname, int module, int kind) {
     int m = name_is_xdef(A, lname, module) ? -1 : module;
     Sym *s = sym_find_exact(A, lname, m);
-    if (!s) s = sym_create(A, lname, m, kind);
+    if (!s) { s = sym_create(A, lname, m, kind); s->inc = A->cur ? A->cur->inc : NULL; }
     return s;
 }
 
@@ -1464,9 +1477,12 @@ static void run_pass(Asm *A) {
 
 /* ------------------------------------------------------------- loading ---- */
 
-static void load_file(Asm *A, const char *path, int module);
+static void load_file(Asm *A, const char *path, int module, const char *inc, int note_only);
 
-static void load_file(Asm *A, const char *path, int module) {
+/* Read a source file into the line list. inc = the file's own path if it is an include
+ * file. note_only: the file was read before, for another module - only its Include lines
+ * are followed, so that this module is known to include those files too. */
+static void load_file(Asm *A, const char *path, int module, const char *inc, int note_only) {
     char *text = read_text_file(path);
     if (!text) { die("cannot read %s", path); }
     char *dir = path_dirname(path);
@@ -1486,18 +1502,26 @@ static void load_file(Asm *A, const char *path, int module) {
             const char **dirs = xmalloc((A->opt->nincdirs + 1) * sizeof *dirs);
             dirs[0] = dir;
             for (int i = 0; i < A->opt->nincdirs; i++) dirs[i + 1] = A->opt->incdirs[i];
-            char *inc = find_file_ci(name, dirs, A->opt->nincdirs + 1, NULL, 0);
+            char *found = find_file_ci(name, dirs, A->opt->nincdirs + 1, NULL, 0);
             free(dirs);
-            if (!inc) die("%s line %d: include file %s not found", path_basename(path), lineno, name);
-            int seen = 0;
-            for (int i = 0; i < A->included.n; i++) if (!strcmp(A->included.v[i], inc)) seen = 1;
-            char *note = xsprintf("; ---- Include %s%s", name, seen ? " (already included)" : "");
-            lines_add(&A->lines, note, fname, lineno, module);
-            free(note);
-            if (!seen) { strlist_add(&A->included, inc); load_file(A, inc, module); }
-            free(inc); free(name);
-        } else {
-            lines_add(&A->lines, line, fname, lineno, module);
+            if (!found) die("%s line %d: include file %s not found", path_basename(path), lineno, name);
+            int seen = 0, mine = 0;
+            for (int i = 0; i < A->included.n; i++) if (!strcmp(A->included.v[i], found)) seen = 1;
+            for (int i = 0; i < A->mod_inc[module].n; i++) if (!strcmp(A->mod_inc[module].v[i], found)) mine = 1;
+            if (!mine) strlist_add(&A->mod_inc[module], found);
+            if (!note_only) {
+                char *note = xsprintf("; ---- Include %s%s", name, seen ? " (already included)" : "");
+                lines_add(&A->lines, note, fname, lineno, module, inc);
+                free(note);
+            }
+            if (!seen) {
+                strlist_add(&A->included, found);
+                const char *kept = A->included.v[A->included.n - 1];    /* the list's copy lives on */
+                load_file(A, kept, module, kept, 0);
+            } else if (!mine) load_file(A, found, module, NULL, 1);
+            free(found); free(name);
+        } else if (!note_only) {
+            lines_add(&A->lines, line, fname, lineno, module, inc);
         }
         free(l); free(o); free(a); free(r); free(line);
         if (!e) break;
@@ -1594,7 +1618,7 @@ int asm_assemble(const char *const *files, int nfiles, const AsmOptions *opt, As
     A->opt = opt;
     memset(res, 0, sizeof *res);
     if (nfiles > MAX_MODULES) die("too many modules (%d)", nfiles);
-    for (int i = 0; i < nfiles; i++) load_file(A, files[i], i);
+    for (int i = 0; i < nfiles; i++) load_file(A, files[i], i, NULL, 0);
     A->nmodules = nfiles;
     prescan(A);
     A->branch_long = xcalloc(A->lines.n + 1, sizeof *A->branch_long);
