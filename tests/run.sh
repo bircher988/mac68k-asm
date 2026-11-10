@@ -66,6 +66,12 @@ echo "ok: regress/Formats (STR and FREF as the MDS RMaker makes them)"
 "$MAC68K" res "$HERE/regress/StrList.R" -o "$TMP/regress" > "$TMP/strl.log" 2>&1 || { cat "$TMP/strl.log"; echo "FAIL: regress/StrList"; exit 1; }
 python3 "$HERE/rescmp.py" "$HERE/regress/StrList.ref.bin" "$TMP/regress/StrOut.bin" || { echo "FAIL: regress/StrList differs from the MDS RMaker"; exit 1; }
 echo "ok: regress/StrList (STR# as the MDS RMaker makes it)"
+# what an include file defines is there for every module that includes it, also beside a
+# module that defines the same name for itself
+"$MAC68K" asm "$HERE/regress/IncEquA.Asm" "$HERE/regress/IncEquB.Asm" "$HERE/regress/IncEquC.Asm" -o "$TMP/regress/IncEqu.raw" -l "$TMP/regress/IncEqu.lst" > "$TMP/incequ.log" 2>&1 || { cat "$TMP/incequ.log"; echo "FAIL: regress/IncEqu"; exit 1; }
+for w in "2038016A" "2238016A" "2438016C"; do
+    grep -q "$w" "$TMP/regress/IncEqu.lst" || { echo "FAIL: regress/IncEqu: $w missing"; exit 1; }; done
+echo "ok: regress/IncEqu (an include file's symbols in every module that includes it)"
 
 if [ -z "${MAC68K_TEST_PROJECTS:-}" ] || [ -z "${MAC68K_TEST_REF:-}" ]; then
     mkdir -p "$TMP/hello"

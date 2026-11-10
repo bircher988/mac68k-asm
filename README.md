@@ -197,7 +197,8 @@ also put the application onto a copy of a development disk image.
 ## The assembler
 
 The assembler reads the whole module set, resolves includes once, and iterates until
-all addresses are stable. Rules of the dialect:
+all addresses are stable. An include file is read for the first module that asks for it;
+what it defines is there for every module that includes it. Rules of the dialect:
 
 - **Labels** are addressed PC-relative, **constants** (`$904`) as abs.W when they fit
   in 16 bits, abs.L otherwise. `d(PC)` and `d(PC,Xn)` with a plain number use the
