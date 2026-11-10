@@ -380,6 +380,21 @@ static void p_str(RParser *p, Buf *b) {
 
 /* FREF: "<file type> <local icon ID> [file name]" - the file type, the ID of
  * its icon in the BNDL and an optional Pascal-string name (MDS RMaker). */
+/* STR#: the number of strings, then that many strings, one on a line */
+static void p_strlist(RParser *p, Buf *b) {
+    if (!peek(p)) fail(p, "STR#: number of strings expected");
+    char *l = next_line(p);
+    long n = parse_int(p, strip(l));
+    free(l);
+    if (n < 0 || n > 32767) fail(p, "STR#: number of strings out of range: %ld", n);
+    put_i16(p, b, n);
+    for (long i = 0; i < n; i++) {
+        if (!peek(p)) fail(p, "STR#: %ld strings expected, %ld found", n, i);
+        l = next_line(p);
+        pstr_checked(p, b, unescape(strip(l)));
+        free(l);
+    }
+}
 static void p_fref(RParser *p, Buf *b) {
     char *l = strip(next_line(p));
     const char *q = l;
@@ -460,6 +475,7 @@ static ResFn lookup_fmt(const char *fmt) {
     if (str_ieq(fmt, "BNDL")) return p_bndl;
     if (str_ieq(fmt, "GNRL")) return p_gnrl;
     if (str_ieq(fmt, "STR")) return p_str;
+    if (str_ieq(fmt, "STR#")) return p_strlist;
     if (str_ieq(fmt, "FREF")) return p_fref;
     return NULL;
 }

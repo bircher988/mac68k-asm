@@ -147,7 +147,8 @@ then `INCLUDE` lines and resources: `Type <type> [= <format>]`, a line `  ,<id>`
 an optional name before the comma and attributes after the ID), the data, a blank line.
 Formats, as in the MDS RMaker: `WIND`, `DLOG`, `ALRT`, `DITL`, `MENU`, `BNDL`, `FREF`
 (`<file type> <local icon ID> [<file name>]`), `STR ` (one line of text; the original
-spells the format with a trailing space, both spellings work) and `GNRL` for anything
+spells the format with a trailing space, both spellings work), `STR#` (the number of
+strings, then one string on a line each) and `GNRL` for anything
 else (`.H` hex, `.I` 16-bit and `.L` 32-bit numbers, `.P` Pascal and `.S` plain
 strings, `.B` bytes). An application with its own icon needs a creator code of its own,
 a signature resource (type = the creator, ID 0), the icon (`ICN#`: 32 rows of icon bits,
